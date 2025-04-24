@@ -1,0 +1,5 @@
+# 共通設定ファイル
+
+DURATION = 0.1
+SAMPLE_RATE = 44100
+NOISE_LEVEL = 0

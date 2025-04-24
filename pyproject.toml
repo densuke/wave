@@ -1,0 +1,7 @@
+[project]
+name = "wave-project"
+version = "0.1.0"
+description = "A project for encoding and decoding wave signals."
+authors = ["Your Name <your.email@example.com>"]
+requires-python = ">=3.9"
+dependencies = ["toml"]
