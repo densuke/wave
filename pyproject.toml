@@ -5,6 +5,7 @@ description = "A project for encoding and decoding wave signals."
 authors = ["Your Name <your.email@example.com>"]
 requires-python = ">=3.9"
 dependencies = [
+    "flet-audio>=0.1.0",
     "flet[all]>=0.28.3",
     "numpy>=2.0.2",
     "toml",

@@ -256,6 +256,18 @@ all = [
 ]
 
 [[package]]
+name = "flet-audio"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "flet" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5f/88/582ad5a2f01715cfcd9211e8696b028c4897b92ce56676596c50ce4f712a/flet_audio-0.1.0.tar.gz", hash = "sha256:675ed25042c8dd011aad6ae224939e05fd3c1cd7bca5050cdb003e5aec3db83c", size = 16940, upload-time = "2025-01-14T21:59:39.8Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b5/f1/26f45d1caa9178eced6cc5b716bd13a667870140a1a8c2e8a032eaab2271/flet_audio-0.1.0-py3-none-any.whl", hash = "sha256:717e1da0fc1cfc941e9b715abb8e93e6f8cccad0fe48dc90c26dd4ce70bed182", size = 18303, upload-time = "2025-01-14T21:59:37.615Z" },
+]
+
+[[package]]
 name = "flet-cli"
 version = "0.28.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1353,6 +1365,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "flet", extra = ["all"] },
+    { name = "flet-audio" },
     { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "numpy", version = "2.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -1367,6 +1380,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "flet", extras = ["all"], specifier = ">=0.28.3" },
+    { name = "flet-audio", specifier = ">=0.1.0" },
     { name = "numpy", specifier = ">=2.0.2" },
     { name = "toml" },
 ]
