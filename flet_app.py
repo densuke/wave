@@ -246,17 +246,15 @@ def main(page: ft.Page) -> None:
 
     def play_encode_btn_click(e):
         if os.name == "nt" and not wav_play_notice_shown["encode"]:
-            page.show_snack_bar(
-                ft.SnackBar(ft.Text("外部プレイヤーで流しているので、停止は外部プレイヤーの終了をしてから押してください"), open=True)
-            )
+            page.snack_bar = ft.SnackBar(ft.Text("外部プレイヤーで流しているので、停止は外部プレイヤーの終了をしてから押してください"), open=True)
+            page.update()
             wav_play_notice_shown["encode"] = True
         play_wav(encode_wav_path, "encode")
 
     def play_noise_btn_click(e):
         if os.name == "nt" and not wav_play_notice_shown["noise"]:
-            page.show_snack_bar(
-                ft.SnackBar(ft.Text("外部プレイヤーで流しているので、停止は外部プレイヤーの終了をしてから押してください"), open=True)
-            )
+            page.snack_bar = ft.SnackBar(ft.Text("外部プレイヤーで流しているので、停止は外部プレイヤーの終了をしてから押してください"), open=True)
+            page.update()
             wav_play_notice_shown["noise"] = True
         play_wav(noise_wav_path, "noise")
 
