@@ -98,6 +98,12 @@ def main(page: ft.Page) -> None:
     noise_wav_path = os.path.join(WORK_DIR, "output.wav")        # ノイズ付加WAVはoutput.wav
     orig_file_path = ""
 
+    # Audioコントロール（ブラウザ内再生用）
+    audio_encode = ft.Audio(src="/static/output_orig.wav", autoplay=False)
+    audio_noise = ft.Audio(src="/static/output.wav", autoplay=False)
+    page.overlay.append(audio_encode)
+    page.overlay.append(audio_noise)
+
     def on_run(e: ft.ControlEvent) -> None:
         # ファイル名取得
         nonlocal orig_file_path
@@ -222,11 +228,15 @@ def main(page: ft.Page) -> None:
         print(f"[再生] {kind}: {path}")
         stop_wav(kind)
         start_play_indicator(path, kind)
-        if os.name == "posix":
-            proc = subprocess.Popen(["afplay", path])
-        else:
-            proc = subprocess.Popen(["start", path], shell=True)
-        play_process[kind] = proc
+        # Audioコントロールでブラウザ内再生
+        if kind == "encode":
+            audio_encode.src = "/static/output_orig.wav"
+            page.update()
+            audio_encode.play()
+        elif kind == "noise":
+            audio_noise.src = "/static/output.wav"
+            page.update()
+            audio_noise.play()
 
     play_encode_btn.on_click = lambda e: play_wav(encode_wav_path, "encode")
     play_noise_btn.on_click = lambda e: play_wav(noise_wav_path, "noise")
