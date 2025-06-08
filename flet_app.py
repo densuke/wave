@@ -59,9 +59,9 @@ def main(page: ft.Page):
     bitrate_dropdown.on_change = on_bitrate_dropdown_change
 
     def set_config_value(key, value):
-        with open(config_path, "r") as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
-        with open(config_path, "w") as f:
+        with open(config_path, "w", encoding="utf-8") as f:
             for line in lines:
                 if line.strip().startswith(f"{key}"):
                     f.write(f"{key} = {value}\n")
