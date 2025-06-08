@@ -220,6 +220,32 @@ def main(page: ft.Page):
         stop_encode_btn.disabled = False
         stop_noise_btn.disabled = False
 
+    # Audioウィジェットを追加
+    audio_encode = ft.Audio(src=encode_wav_path, autoplay=False, volume=1.0, controls=True)
+    audio_noise = ft.Audio(src=noise_wav_path, autoplay=False, volume=1.0, controls=True)
+
+    def update_audio_src():
+        audio_encode.src = encode_wav_path
+        audio_noise.src = noise_wav_path
+        page.update()
+
+    # 再生ボタンの挙動をAudioウィジェットに変更
+    def play_encode_audio(e):
+        update_audio_src()
+        audio_encode.play()
+    def play_noise_audio(e):
+        update_audio_src()
+        audio_noise.play()
+    def stop_encode_audio(e):
+        audio_encode.pause()
+    def stop_noise_audio(e):
+        audio_noise.pause()
+
+    play_encode_btn.on_click = play_encode_audio
+    play_noise_btn.on_click = play_noise_audio
+    stop_encode_btn = ft.ElevatedButton("エンコード再生停止", on_click=stop_encode_audio, disabled=True)
+    stop_noise_btn = ft.ElevatedButton("ノイズ再生停止", on_click=stop_noise_audio, disabled=True)
+
     # レイアウト
     page.add(
         ft.Row([
@@ -244,14 +270,16 @@ def main(page: ft.Page):
                         ft.Text("エンコードWAV", size=12, weight=ft.FontWeight.BOLD),
                         ft.Row([
                             play_encode_btn,
-                            stop_encode_btn
+                            stop_encode_btn,
+                            audio_encode
                         ], tight=True)
                     ], spacing=4),
                     ft.Column([
                         ft.Text("ノイズ付加WAV", size=12, weight=ft.FontWeight.BOLD),
                         ft.Row([
                             play_noise_btn,
-                            stop_noise_btn
+                            stop_noise_btn,
+                            audio_noise
                         ], tight=True)
                     ], spacing=4)
                 ], wrap=True, alignment=ft.MainAxisAlignment.START, spacing=24)
