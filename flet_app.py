@@ -273,6 +273,10 @@ def main(page: ft.Page) -> None:
     # レイアウト
     # audioタグ埋め込み削除
 
+    # WindowsではNoneを除外したリストを構築
+    def filter_none(lst):
+        return [x for x in lst if x is not None]
+
     page.add(
         ft.Row([
             ft.Column([
@@ -284,7 +288,7 @@ def main(page: ft.Page) -> None:
                 bitrate_dropdown,
             ], alignment=ft.MainAxisAlignment.START, width=220),
             ft.VerticalDivider(width=1),
-            ft.Column([
+            ft.Column(filter_none([
                 ft.Row([
                     file_name_input,
                     file_name_label
@@ -293,27 +297,26 @@ def main(page: ft.Page) -> None:
                 progress_ring,
                 result_text,
                 md5_text,
-                # Windowsでは再生インジケーター・停止ボタン非表示
                 play_indicator if os.name != "nt" else None,
                 ft.Row([
                     ft.Column([
                         ft.Text("エンコードWAV", size=12, weight=ft.FontWeight.BOLD),
                         encode_wav_md5_text,
-                        ft.Row([
+                        ft.Row(filter_none([
                             play_encode_btn,
                             stop_encode_btn if os.name != "nt" else None
-                        ], tight=True)
+                        ]), tight=True)
                     ], spacing=4),
                     ft.Column([
                         ft.Text("ノイズ付加WAV", size=12, weight=ft.FontWeight.BOLD),
                         noise_wav_md5_text,
-                        ft.Row([
+                        ft.Row(filter_none([
                             play_noise_btn,
                             stop_noise_btn if os.name != "nt" else None
-                        ], tight=True)
+                        ]), tight=True)
                     ], spacing=4)
                 ], wrap=True, alignment=ft.MainAxisAlignment.START, spacing=24)
-            ], alignment=ft.MainAxisAlignment.START, expand=True)
+            ]), alignment=ft.MainAxisAlignment.START, expand=True)
         ], expand=True),
     )
 
