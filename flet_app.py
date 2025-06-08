@@ -274,4 +274,6 @@ def main(page: ft.Page):
         ], expand=True),
     )
 
-ft.app(target=main)
+if __name__ == "__main__":
+    # Flet UIをブラウザで開く
+    ft.app(target=main, view=ft.AppView.WEB_BROWSER)
