@@ -1,19 +1,22 @@
-import toml
-
-# 設定を読み込む
-config = toml.load("config.toml")
-DURATION = config["DURATION"]
-SAMPLE_RATE = config["SAMPLE_RATE"]
-NOISE_LEVEL = config["NOISE_LEVEL"]
-
 from lib.utils import validate_bit_string, validate_noise_level
 import wave
 import struct
 import math
-import sys
 import random
+import toml
+import argparse
 
-def generate_tone(bit_string, duration=DURATION, sample_rate=SAMPLE_RATE, noise_level=NOISE_LEVEL):
+# 設定を読み込む
+config = toml.load("config.toml")
+BITRATE = config["BITRATE"]  # 1秒間に何ビット詰め込むか
+SAMPLE_RATE = config["SAMPLE_RATE"]
+NOISE_LEVEL = config["NOISE_LEVEL"]
+
+
+def generate_tone(bit_string, duration=None, sample_rate=SAMPLE_RATE, noise_level=NOISE_LEVEL):
+    if duration is None:
+        duration = 1.0 / BITRATE  # 1ビットあたりの秒数
+
     """
     0と1の文字列から、それぞれ440Hzと880Hzの音を生成し、ノイズを加えたWAVファイルに保存する。
 
@@ -22,8 +25,8 @@ def generate_tone(bit_string, duration=DURATION, sample_rate=SAMPLE_RATE, noise_
     :param sample_rate: サンプリングレート
     :param noise_level: ノイズの強さ（0〜5）
     """
-    # 周波数のマッピング
-    freq_map = {'0': 440, '1': 880}
+    # 周波数のマッピング（Bell 202 FSK: 0=1200Hz, 1=2200Hz）
+    freq_map = {'0': 1200, '1': 2200}
 
     # WAVファイルの設定
     output_file = "output.wav"
@@ -58,15 +61,34 @@ def generate_tone(bit_string, duration=DURATION, sample_rate=SAMPLE_RATE, noise_
 
     print(f"WAVファイルを生成しました: {output_file}")
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2 or len(sys.argv) > 3:
-        print("使い方: python3 encode.py <01の文字列> [ノイズレベル(0〜5)]")
-        sys.exit(1)
+def str_to_bitstring(s):
+    return ''.join(f'{b:08b}' for b in s.encode('utf-8'))
 
-    bit_string = sys.argv[1]
+def file_to_bitstring(filepath):
+    with open(filepath, 'rb') as f:
+        data = f.read()
+    return ''.join(f'{b:08b}' for b in data)
+
+def main():
+    parser = argparse.ArgumentParser(description="文字列またはファイルをFSK音声にエンコード")
+    parser.add_argument('input', nargs='?', help='エンコードする文字列')
+    parser.add_argument('--file', type=str, help='エンコードするファイルパス')
+    parser.add_argument('noise_level', nargs='?', type=int, help='ノイズレベル(0〜5)')
+    args = parser.parse_args()
+
+    if args.file:
+        bit_string = file_to_bitstring(args.file)
+        print(f"[INFO] ファイル {args.file} をビット列に変換してエンコードします")
+    elif args.input:
+        bit_string = str_to_bitstring(args.input)
+    else:
+        print("使い方: python3 encode.py <文字列> [ノイズレベル] または --file <ファイルパス> [ノイズレベル]")
+        return
+
     validate_bit_string(bit_string)
-
-    noise_level = int(sys.argv[2]) if len(sys.argv) == 3 else NOISE_LEVEL
+    noise_level = args.noise_level if args.noise_level is not None else NOISE_LEVEL
     validate_noise_level(noise_level)
-
     generate_tone(bit_string, noise_level=noise_level)
+
+if __name__ == "__main__":
+    main()
