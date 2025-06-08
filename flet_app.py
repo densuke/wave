@@ -37,7 +37,7 @@ def main(page: ft.Page):
 
     # config.tomlから初期値取得
     import re
-    with open(config_path, "r") as f:
+    with open(config_path, "r", encoding="utf-8") as f:
         config_text = f.read()
     bitrate_match = re.search(r"BITRATE\s*=\s*(\d+)", config_text)
     bitrate_init = int(bitrate_match.group(1)) if bitrate_match else 1200
