@@ -220,9 +220,9 @@ def main(page: ft.Page):
         stop_encode_btn.disabled = False
         stop_noise_btn.disabled = False
 
-    # Audioウィジェットを追加
-    audio_encode = ft.Audio(src=encode_wav_path, autoplay=False, volume=1.0, controls=True)
-    audio_noise = ft.Audio(src=noise_wav_path, autoplay=False, volume=1.0, controls=True)
+    # Audioウィジェットを追加（controls引数を削除）
+    audio_encode = ft.Audio(src=encode_wav_path, autoplay=False, volume=1.0)
+    audio_noise = ft.Audio(src=noise_wav_path, autoplay=False, volume=1.0)
 
     def update_audio_src():
         audio_encode.src = encode_wav_path
