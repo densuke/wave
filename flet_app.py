@@ -42,14 +42,30 @@ def main(page: ft.Page):
     bitrate_match = re.search(r"BITRATE\s*=\s*(\d+)", config_text)
     bitrate_init = int(bitrate_match.group(1)) if bitrate_match else 1200
 
-    # ビットレート選択肢（8000Hzサンプリングで安全な範囲のみ）
-    bitrate_options = [300, 600, 1200, 2400, 4800]  # 9600は除外
+    # サンプリングレート選択肢（FSKビットレートに応じて推奨値を用意）
+    sample_rate_options = [8000, 9600, 16000, 22050, 44100, 48000]
+    sample_rate_dropdown = ft.Dropdown(
+        label="サンプリングレート",
+        options=[ft.dropdown.Option(str(sr)) for sr in sample_rate_options],
+        value="9600",
+        width=180
+    )
+
+    # ビットレート選択肢（9600Hzサンプリングで4800までOK）
+    bitrate_options = [300, 600, 1200, 2400, 4800]
     bitrate_dropdown = ft.Dropdown(
         label="ビットレート",
         options=[ft.dropdown.Option(str(b)) for b in bitrate_options],
         value=str(bitrate_init) if bitrate_init in bitrate_options else "1200",
         width=180
     )
+
+    def on_sample_rate_dropdown_change(e):
+        # サンプリングレート変更時にconfig.tomlも更新
+        if sample_rate_dropdown.value is not None:
+            set_config_value("SAMPLE_RATE", sample_rate_dropdown.value)
+        page.update()
+    sample_rate_dropdown.on_change = on_sample_rate_dropdown_change
 
     def on_bitrate_dropdown_change(e):
         if bitrate_dropdown.value is not None:
@@ -105,12 +121,14 @@ def main(page: ft.Page):
             return
         noise_level = int(noise_slider.value)
         bitrate = int(bitrate_dropdown.value) if bitrate_dropdown.value is not None else 1200
+        sample_rate = int(sample_rate_dropdown.value) if sample_rate_dropdown.value is not None else 9600
         set_noise_level_config(noise_level)
         set_bitrate_config(bitrate)
+        set_config_value("SAMPLE_RATE", sample_rate)
         # ファイルエンコード
         bit_string = encode.file_to_bitstring(orig_file_path)
         encode.validate_bit_string(bit_string)
-        encode.generate_tone(bit_string, duration=1.0/bitrate, sample_rate=8000, noise_level=noise_level, output_path=encode_wav_path)
+        encode.generate_tone(bit_string, duration=1.0/bitrate, sample_rate=sample_rate, noise_level=noise_level, output_path=encode_wav_path)
         # ノイズ付加
         import shutil
         shutil.copy2(encode_wav_path, noise_wav_path)
@@ -120,7 +138,7 @@ def main(page: ft.Page):
                 params = wavf.getparams()
                 frames = wavf.readframes(wavf.getnframes())
                 samples = noise.np.frombuffer(frames, dtype=noise.np.int16)
-        noisy_samples = noise.add_noise(samples, 8000, noise_level)
+        noisy_samples = noise.add_noise(samples, sample_rate, noise_level)
         with wave.open(noise_wav_path, 'wb') as wf:
             wf.setparams(params)
             wf.writeframes(noisy_samples.tobytes())
@@ -128,7 +146,7 @@ def main(page: ft.Page):
         with open(orig_file_path, 'rb') as f:
             orig_bytes = f.read()
         correct_bit_string = ''.join(f'{b:08b}' for b in orig_bytes)
-        bit_string_decoded = decode.decode_tone(noise_wav_path, correct_bit_string, duration=1.0/bitrate, sample_rate=8000)
+        bit_string_decoded = decode.decode_tone(noise_wav_path, correct_bit_string, duration=1.0/bitrate, sample_rate=sample_rate)
         restored_bytes = decode.bitstring_to_bytes(bit_string_decoded)
         # エンコードWAVのMD5
         import hashlib
@@ -239,6 +257,8 @@ def main(page: ft.Page):
             ft.Column([
                 ft.Text("ノイズレベル", size=14, weight=ft.FontWeight.BOLD),
                 noise_slider,
+                ft.Text("サンプリングレート", size=14, weight=ft.FontWeight.BOLD),
+                sample_rate_dropdown,
                 ft.Text("ビットレート", size=14, weight=ft.FontWeight.BOLD),
                 bitrate_dropdown,
             ], alignment=ft.MainAxisAlignment.START, width=220),

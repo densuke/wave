@@ -1,5 +1,0 @@
-# 共通設定ファイルテンプレート
-
-BITRATE = 1200
-SAMPLE_RATE = 8000
-NOISE_LEVEL = 0
