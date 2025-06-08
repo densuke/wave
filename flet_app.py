@@ -90,6 +90,8 @@ def main(page: ft.Page) -> None:
     # 音声再生ボタン
     play_encode_btn = ft.ElevatedButton("エンコードWAV再生", disabled=True)
     play_noise_btn = ft.ElevatedButton("ノイズ付加WAV再生", disabled=True)
+    # Windows外部再生案内フラグ
+    wav_play_notice_shown = {"encode": False, "noise": False}
 
     # MD5表示用テキスト（各WAVファイルごと）
     encode_wav_md5_text = ft.Text(value="", size=12, color="blue")
@@ -242,8 +244,24 @@ def main(page: ft.Page) -> None:
             proc = subprocess.Popen(["start", path], shell=True)
         play_process[kind] = proc
 
-    play_encode_btn.on_click = lambda e: play_wav(encode_wav_path, "encode")
-    play_noise_btn.on_click = lambda e: play_wav(noise_wav_path, "noise")
+    def play_encode_btn_click(e):
+        if os.name == "nt" and not wav_play_notice_shown["encode"]:
+            page.show_snack_bar(
+                ft.SnackBar(ft.Text("外部プレイヤーで流しているので、停止は外部プレイヤーの終了をしてから押してください"), open=True)
+            )
+            wav_play_notice_shown["encode"] = True
+        play_wav(encode_wav_path, "encode")
+
+    def play_noise_btn_click(e):
+        if os.name == "nt" and not wav_play_notice_shown["noise"]:
+            page.show_snack_bar(
+                ft.SnackBar(ft.Text("外部プレイヤーで流しているので、停止は外部プレイヤーの終了をしてから押してください"), open=True)
+            )
+            wav_play_notice_shown["noise"] = True
+        play_wav(noise_wav_path, "noise")
+
+    play_encode_btn.on_click = play_encode_btn_click
+    play_noise_btn.on_click = play_noise_btn_click
     stop_encode_btn = ft.ElevatedButton("エンコード再生停止", on_click=lambda e: stop_wav("encode"), disabled=True)
     stop_noise_btn = ft.ElevatedButton("ノイズ再生停止", on_click=lambda e: stop_wav("noise"), disabled=True)
 
