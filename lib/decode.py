@@ -1,10 +1,15 @@
 from lib.utils import read_wav_file, calculate_fft
 import toml
+import io
 import numpy as np
 import argparse
 import hashlib
-# 設定を読み込む
-config = toml.load("config.toml")
+# 設定を読み込む（Windows対応: encoding指定）
+def load_config_toml():
+    with open("config.toml", "r", encoding="utf-8") as f:
+        return toml.load(io.StringIO(f.read()))
+
+config = load_config_toml()
 SAMPLE_RATE = config["SAMPLE_RATE"]
 BITRATE = config["BITRATE"]  # 1秒間に何ビット詰め込むか
 

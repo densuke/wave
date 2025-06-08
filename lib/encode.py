@@ -4,10 +4,15 @@ import struct
 import math
 import random
 import toml
+import io
 import argparse
 
-# 設定を読み込む
-config = toml.load("config.toml")
+# 設定を読み込む（Windows対応: encoding指定）
+def load_config_toml():
+    with open("config.toml", "r", encoding="utf-8") as f:
+        return toml.load(io.StringIO(f.read()))
+
+config = load_config_toml()
 BITRATE = config["BITRATE"]  # 1秒間に何ビット詰め込むか
 SAMPLE_RATE = config["SAMPLE_RATE"]
 NOISE_LEVEL = config["NOISE_LEVEL"]
