@@ -116,6 +116,10 @@ def main(page: ft.Page) -> None:
         set_noise_level_config(noise_level)
         set_bitrate_config(bitrate)
         set_config_value("SAMPLE_RATE", sample_rate)
+        # staticディレクトリ作成（なければ）
+        static_dir = os.path.join(WORK_DIR, "static")
+        if not os.path.exists(static_dir):
+            os.makedirs(static_dir)
         # ファイルエンコード
         bit_string = encode.file_to_bitstring(orig_file_path)
         encode.validate_bit_string(bit_string)
