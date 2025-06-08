@@ -13,3 +13,4 @@ wheels/
 config.toml
 
 config.toml
+.DS_Store
