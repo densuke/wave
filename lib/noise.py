@@ -9,30 +9,60 @@ import random
 def add_noise(samples, sample_rate, noise_level):
     """
     サンプル配列にノイズを加える。
-    noise_level: 0(無し)〜5(かなりひどい)
+    noise_level: 0(無し)〜8(8=徹底的に酷い)
     """
     if noise_level == 0:
         return samples
 
-    # ホワイトノイズ（強度を下げる）
-    white_noise = np.random.normal(0, 500 * noise_level, samples.shape)
+    # ホワイトノイズ
+    if noise_level == 8:
+        white_noise = np.random.normal(0, 25000, samples.shape)
+    elif noise_level == 7:
+        white_noise = np.random.normal(0, 12000, samples.shape)
+    else:
+        white_noise = np.random.normal(0, 200 * noise_level, samples.shape)
 
-    # ハムノイズ（強度を下げる）
+    # ハムノイズ
     hum_freq = 50 if random.random() < 0.5 else 60
     t = np.arange(len(samples)) / sample_rate
-    hum_noise = 1000 * noise_level * np.sin(2 * np.pi * hum_freq * t)
+    if noise_level == 8:
+        hum_noise = 20000 * np.sin(2 * np.pi * hum_freq * t)
+    elif noise_level == 7:
+        hum_noise = 10000 * np.sin(2 * np.pi * hum_freq * t)
+    else:
+        hum_noise = 400 * noise_level * np.sin(2 * np.pi * hum_freq * t)
 
-    # パルスノイズ（発生数・振幅を抑える）
+    # パルスノイズ
     pulse_noise = np.zeros_like(samples)
     if noise_level >= 3:
-        num_pulses = int(len(samples) * 0.0005 * noise_level)  # 発生数半減
+        if noise_level == 8:
+            num_pulses = int(len(samples) * 0.01)
+            amp = 32000
+        elif noise_level == 7:
+            num_pulses = int(len(samples) * 0.005)
+            amp = 20000
+        else:
+            num_pulses = int(len(samples) * 0.0003 * noise_level * (1 + (noise_level-5)*0.5 if noise_level > 5 else 1))
+            amp = 6000 * noise_level * (2 if noise_level >= 7 else 1)
         for _ in range(num_pulses):
             idx = random.randint(0, len(samples) - 1)
-            val = random.choice([-1, 1]) * 10000 * noise_level  # 振幅半減
+            val = random.choice([-1, 1]) * amp
             val = int(np.clip(val, -32768, 32767))
             pulse_noise[idx] = val
 
-    noisy = samples + white_noise + hum_noise + pulse_noise
+    # バンドノイズ（FSK信号帯域）
+    band_noise = np.zeros_like(samples, dtype=np.float64)
+    if noise_level == 8:
+        for freq in range(200, 401, 20):
+            band_noise += 12000 * np.sin(2 * np.pi * freq * t + np.random.rand()*2*np.pi)
+    elif noise_level == 7:
+        for freq in range(200, 401, 40):
+            band_noise += 6000 * np.sin(2 * np.pi * freq * t + np.random.rand()*2*np.pi)
+
+    if noise_level >= 7:
+        noisy = samples + white_noise + hum_noise + pulse_noise + band_noise
+    else:
+        noisy = samples + white_noise + hum_noise + pulse_noise
     noisy = np.clip(noisy, -32768, 32767)
     return noisy.astype(np.int16)
 

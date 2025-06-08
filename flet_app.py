@@ -33,7 +33,7 @@ def main(page: ft.Page):
     file_name_label = ft.Text(value="", size=12)
 
     # ノイズレベル
-    noise_slider = ft.Slider(min=0, max=5, divisions=5, label="ノイズレベル: {value}", value=0)
+    noise_slider = ft.Slider(min=0, max=8, divisions=8, label="ノイズレベル: {value}", value=0)
 
     # config.tomlから初期値取得
     import re
@@ -84,6 +84,10 @@ def main(page: ft.Page):
     play_encode_btn = ft.ElevatedButton("エンコードWAV再生", disabled=True)
     play_noise_btn = ft.ElevatedButton("ノイズ付加WAV再生", disabled=True)
 
+    # MD5表示用テキスト（各WAVファイルごと）
+    encode_wav_md5_text = ft.Text(value="", size=12, color="blue")
+    noise_wav_md5_text = ft.Text(value="", size=12, color="blue")
+
     # ファイルパス保持
     encode_wav_path = os.path.join(WORK_DIR, "output_orig.wav")  # エンコードWAVはoutput_orig.wav
     noise_wav_path = os.path.join(WORK_DIR, "output.wav")        # ノイズ付加WAVはoutput.wav
@@ -126,7 +130,17 @@ def main(page: ft.Page):
         correct_bit_string = ''.join(f'{b:08b}' for b in orig_bytes)
         bit_string_decoded = decode.decode_tone(noise_wav_path, correct_bit_string, duration=1.0/bitrate, sample_rate=8000)
         restored_bytes = decode.bitstring_to_bytes(bit_string_decoded)
+        # エンコードWAVのMD5
         import hashlib
+        with open(encode_wav_path, 'rb') as f:
+            encode_wav_md5 = hashlib.md5(f.read()).hexdigest()
+        encode_wav_md5_text.value = f"MD5: {encode_wav_md5}"
+        # ノイズ付加WAVのMD5
+        with open(noise_wav_path, 'rb') as f:
+            noise_wav_md5 = hashlib.md5(f.read()).hexdigest()
+        noise_wav_md5_text.value = f"MD5: {noise_wav_md5}"
+        # 全体比較用MD5
+        md5_text.value = ""
         orig_md5 = hashlib.md5(orig_bytes).hexdigest()
         restored_md5 = hashlib.md5(restored_bytes).hexdigest()
         compare_result = f"[MD5] 元データ: {orig_md5}\n[MD5] 復元データ: {restored_md5}"
@@ -149,7 +163,6 @@ def main(page: ft.Page):
     play_process: dict[str, typing.Any] = {"encode": None, "noise": None}
     # 再生インジケーター
     play_indicator = ft.Text(value="", size=12)
-    play_indicator_timer = None
     play_indicator_stop_flag = {"encode": False, "noise": False}
 
     import time
@@ -242,6 +255,7 @@ def main(page: ft.Page):
                 ft.Row([
                     ft.Column([
                         ft.Text("エンコードWAV", size=12, weight=ft.FontWeight.BOLD),
+                        encode_wav_md5_text,
                         ft.Row([
                             play_encode_btn,
                             stop_encode_btn
@@ -249,6 +263,7 @@ def main(page: ft.Page):
                     ], spacing=4),
                     ft.Column([
                         ft.Text("ノイズ付加WAV", size=12, weight=ft.FontWeight.BOLD),
+                        noise_wav_md5_text,
                         ft.Row([
                             play_noise_btn,
                             stop_noise_btn
