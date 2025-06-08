@@ -92,6 +92,21 @@ def main(page: ft.Page):
     def on_run(e):
         # ファイル名取得
         nonlocal orig_file_path
+        # Audioウィジェットのsrcを一旦Noneにしてロックを解除
+        audio_encode.src = None
+        audio_noise.src = None
+        page.update()
+        # 既存のwavファイルを削除してPermissionErrorを回避
+        try:
+            if os.path.exists(encode_wav_path):
+                os.remove(encode_wav_path)
+        except Exception as ex:
+            print(f"[警告] {encode_wav_path} の削除に失敗: {ex}")
+        try:
+            if os.path.exists(noise_wav_path):
+                os.remove(noise_wav_path)
+        except Exception as ex:
+            print(f"[警告] {noise_wav_path} の削除に失敗: {ex}")
         file_path_from_input = file_name_input.value.strip() if file_name_input.value else ""
         if file_path_from_input:
             orig_file_path = file_path_from_input
@@ -107,8 +122,26 @@ def main(page: ft.Page):
         bit_string = encode.file_to_bitstring(orig_file_path)
         encode.validate_bit_string(bit_string)
         encode.generate_tone(bit_string, duration=1.0/bitrate, sample_rate=8000, noise_level=noise_level, output_path=encode_wav_path)
-        # ノイズ付加
-        import shutil
+        # --- output_orig.wav生成直前に個別削除 ---
+        try:
+            if os.path.exists(encode_wav_path):
+                os.remove(encode_wav_path)
+        except Exception as ex:
+            print(f"[警告] {encode_wav_path} の削除に失敗: {ex}")
+        encode.generate_tone(bit_string, duration=1.0/bitrate, sample_rate=8000, noise_level=noise_level, output_path=encode_wav_path)
+        # --- output.wav生成直前に既存ファイルをバックアップリネーム ---
+        backup_wav_path = noise_wav_path + ".bak"
+        if os.path.exists(noise_wav_path):
+            try:
+                if os.path.exists(backup_wav_path):
+                    os.remove(backup_wav_path)
+            except Exception as ex:
+                print(f"[警告] {backup_wav_path} の削除に失敗: {ex}")
+            try:
+                os.rename(noise_wav_path, backup_wav_path)
+            except Exception as ex:
+                print(f"[警告] {noise_wav_path} のリネームに失敗: {ex}")
+        # ノイズ付加処理
         shutil.copy2(encode_wav_path, noise_wav_path)
         with open(noise_wav_path, "rb") as wf:
             import wave
