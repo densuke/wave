@@ -6,19 +6,26 @@ import random
 import toml
 import io
 import argparse
+from typing import Optional
 
 # 設定を読み込む（Windows対応: encoding指定）
-def load_config_toml():
-    with open("config.toml", "r", encoding="utf-8") as f:
+def load_config_toml(config_path: str = "config.toml") -> dict:
+    with open(config_path, "r", encoding="utf-8") as f:
         return toml.load(io.StringIO(f.read()))
 
 config = load_config_toml()
-BITRATE = config["BITRATE"]  # 1秒間に何ビット詰め込むか
-SAMPLE_RATE = config["SAMPLE_RATE"]
-NOISE_LEVEL = config["NOISE_LEVEL"]
+BITRATE: int = config["BITRATE"]  # 1秒間に何ビット詰め込むか
+SAMPLE_RATE: int = config["SAMPLE_RATE"]
+NOISE_LEVEL: int = config["NOISE_LEVEL"]
 
 
-def generate_tone(bit_string, duration=None, sample_rate=SAMPLE_RATE, noise_level=NOISE_LEVEL, output_path="output.wav"):
+def generate_tone(
+    bit_string: str,
+    duration: Optional[float] = None,
+    sample_rate: int = SAMPLE_RATE,
+    noise_level: int = NOISE_LEVEL,
+    output_path: str = "output.wav"
+) -> None:
     if duration is None:
         duration = 1.0 / BITRATE  # 1ビットあたりの秒数
 
@@ -59,15 +66,15 @@ def generate_tone(bit_string, duration=None, sample_rate=SAMPLE_RATE, noise_leve
 
     print(f"WAVファイルを生成しました: {output_path}")
 
-def str_to_bitstring(s):
+def str_to_bitstring(s: str) -> str:
     return ''.join(f'{b:08b}' for b in s.encode('utf-8'))
 
-def file_to_bitstring(filepath):
+def file_to_bitstring(filepath: str) -> str:
     with open(filepath, 'rb') as f:
         data = f.read()
     return ''.join(f'{b:08b}' for b in data)
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="文字列またはファイルをFSK音声にエンコード")
     parser.add_argument('input', nargs='?', help='エンコードする文字列')
     parser.add_argument('--file', type=str, help='エンコードするファイルパス')

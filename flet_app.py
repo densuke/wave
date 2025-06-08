@@ -5,6 +5,8 @@ import flet as ft
 import subprocess
 import typing
 import shutil
+import numpy as np
+from lib.utils import set_config_value, load_config_toml
 
 WORK_DIR = os.path.dirname(os.path.abspath(__file__))
 config_template_path = os.path.join(WORK_DIR, "config.toml.in")
@@ -13,9 +15,10 @@ if not os.path.exists(config_path):
     shutil.copy2(config_template_path, config_path)
 
 sys.path.insert(0, os.path.join(WORK_DIR, "lib"))
+# モジュールのimport
 encode = importlib.import_module("encode")
-decode = importlib.import_module("decode")
-noise = importlib.import_module("noise")
+decode_mod = importlib.import_module("decode")
+noise_mod = importlib.import_module("noise")
 
 # config.toml自動生成
 config_template_path = os.path.join(WORK_DIR, "config.toml.in")
@@ -25,7 +28,7 @@ if not os.path.exists(config_path):
 
 # UIコールバック
 
-def main(page: ft.Page):
+def main(page: ft.Page) -> None:
     page.title = "FSKエンコード/デコードUI"
 
     # 入力欄（ファイル名入力のみ、初期値はsample.txt）
@@ -36,11 +39,8 @@ def main(page: ft.Page):
     noise_slider = ft.Slider(min=0, max=8, divisions=8, label="ノイズレベル: {value}", value=0)
 
     # config.tomlから初期値取得
-    import re
-    with open(config_path, "r", encoding="utf-8") as f:
-        config_text = f.read()
-    bitrate_match = re.search(r"BITRATE\s*=\s*(\d+)", config_text)
-    bitrate_init = int(bitrate_match.group(1)) if bitrate_match else 1200
+    config = load_config_toml(config_path)
+    bitrate_init = config.get("BITRATE", 1200)
 
     # サンプリングレート選択肢（FSKビットレートに応じて推奨値を用意）
     sample_rate_options = [8000, 9600, 16000, 22050, 44100, 48000]
@@ -60,34 +60,23 @@ def main(page: ft.Page):
         width=180
     )
 
-    def on_sample_rate_dropdown_change(e):
-        # サンプリングレート変更時にconfig.tomlも更新
+    def on_sample_rate_dropdown_change(e: ft.ControlEvent) -> None:
         if sample_rate_dropdown.value is not None:
-            set_config_value("SAMPLE_RATE", sample_rate_dropdown.value)
+            set_config_value("SAMPLE_RATE", sample_rate_dropdown.value, config_path)
         page.update()
     sample_rate_dropdown.on_change = on_sample_rate_dropdown_change
 
-    def on_bitrate_dropdown_change(e):
+    def on_bitrate_dropdown_change(e: ft.ControlEvent) -> None:
         if bitrate_dropdown.value is not None:
             v = int(bitrate_dropdown.value)
-            set_bitrate_config(v)
+            set_config_value("BITRATE", v, config_path)
         page.update()
     bitrate_dropdown.on_change = on_bitrate_dropdown_change
 
-    def set_config_value(key, value):
-        with open(config_path, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-        with open(config_path, "w", encoding="utf-8") as f:
-            for line in lines:
-                if line.strip().startswith(f"{key}"):
-                    f.write(f"{key} = {value}\n")
-                else:
-                    f.write(line)
-
-    def set_noise_level_config(level):
-        set_config_value("NOISE_LEVEL", level)
-    def set_bitrate_config(bitrate):
-        set_config_value("BITRATE", bitrate)
+    def set_noise_level_config(level: int) -> None:
+        set_config_value("NOISE_LEVEL", level, config_path)
+    def set_bitrate_config(bitrate: int) -> None:
+        set_config_value("BITRATE", bitrate, config_path)
 
     # 実行ボタン
     run_btn = ft.ElevatedButton("変換開始", disabled=False)
@@ -109,7 +98,7 @@ def main(page: ft.Page):
     noise_wav_path = os.path.join(WORK_DIR, "output.wav")        # ノイズ付加WAVはoutput.wav
     orig_file_path = ""
 
-    def on_run(e):
+    def on_run(e: ft.ControlEvent) -> None:
         # ファイル名取得
         nonlocal orig_file_path
         file_path_from_input = file_name_input.value.strip() if file_name_input.value else ""
@@ -137,8 +126,8 @@ def main(page: ft.Page):
             with wave.open(wf, 'rb') as wavf:
                 params = wavf.getparams()
                 frames = wavf.readframes(wavf.getnframes())
-                samples = noise.np.frombuffer(frames, dtype=noise.np.int16)
-        noisy_samples = noise.add_noise(samples, sample_rate, noise_level)
+                samples = np.frombuffer(frames, dtype=np.int16)
+        noisy_samples = noise_mod.add_noise(samples, sample_rate, noise_level)
         with wave.open(noise_wav_path, 'wb') as wf:
             wf.setparams(params)
             wf.writeframes(noisy_samples.tobytes())
@@ -146,8 +135,8 @@ def main(page: ft.Page):
         with open(orig_file_path, 'rb') as f:
             orig_bytes = f.read()
         correct_bit_string = ''.join(f'{b:08b}' for b in orig_bytes)
-        bit_string_decoded = decode.decode_tone(noise_wav_path, correct_bit_string, duration=1.0/bitrate, sample_rate=sample_rate)
-        restored_bytes = decode.bitstring_to_bytes(bit_string_decoded)
+        bit_string_decoded = decode_mod.decode_tone(noise_wav_path, correct_bit_string, duration=1.0/bitrate, sample_rate=sample_rate)
+        restored_bytes = decode_mod.bitstring_to_bytes(bit_string_decoded)
         # エンコードWAVのMD5
         import hashlib
         with open(encode_wav_path, 'rb') as f:
@@ -181,18 +170,18 @@ def main(page: ft.Page):
     play_process: dict[str, typing.Any] = {"encode": None, "noise": None}
     # 再生インジケーター
     play_indicator = ft.Text(value="", size=12)
-    play_indicator_stop_flag = {"encode": False, "noise": False}
+    play_indicator_stop_flag: dict[str, bool] = {"encode": False, "noise": False}
 
     import time
     import threading
     import wave as pywave
 
-    def format_time(sec):
+    def format_time(sec: float) -> str:
         m = int(sec) // 60
         s = int(sec) % 60
         return f"{m}:{s:02d}"
 
-    def start_play_indicator(path, kind):
+    def start_play_indicator(path: str, kind: str) -> None:
         try:
             with pywave.open(path, 'rb') as wf:
                 frames = wf.getnframes()
@@ -219,17 +208,17 @@ def main(page: ft.Page):
         t = threading.Thread(target=update, daemon=True)
         t.start()
 
-    def stop_play_indicator(kind):
+    def stop_play_indicator(kind: str) -> None:
         play_indicator_stop_flag[kind] = True
 
-    def stop_wav(kind):
+    def stop_wav(kind: str) -> None:
         proc = play_process.get(kind)
         if proc is not None and hasattr(proc, 'poll') and proc.poll() is None:
             proc.terminate()
         play_process[kind] = None
         stop_play_indicator(kind)
 
-    def play_wav(path, kind):
+    def play_wav(path: str, kind: str) -> None:
         print(f"[再生] {kind}: {path}")
         stop_wav(kind)
         start_play_indicator(path, kind)
@@ -245,7 +234,7 @@ def main(page: ft.Page):
     stop_noise_btn = ft.ElevatedButton("ノイズ再生停止", on_click=lambda e: stop_wav("noise"), disabled=True)
 
     # 再生ボタン有効化時に停止ボタンも有効化
-    def enable_play_buttons():
+    def enable_play_buttons() -> None:
         play_encode_btn.disabled = False
         play_noise_btn.disabled = False
         stop_encode_btn.disabled = False

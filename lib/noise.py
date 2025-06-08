@@ -6,7 +6,7 @@ import random
 
 # ノイズ生成関数
 
-def add_noise(samples, sample_rate, noise_level):
+def add_noise(samples: np.ndarray, sample_rate: int, noise_level: int) -> np.ndarray:
     """
     サンプル配列にノイズを加える。
     noise_level: 0(無し)〜8(8=徹底的に酷い)
@@ -67,7 +67,7 @@ def add_noise(samples, sample_rate, noise_level):
     return noisy.astype(np.int16)
 
 
-def main():
+def main() -> None:
     if len(sys.argv) != 3:
         print("使い方: python3 noise.py <wavファイル> <ノイズレベル(0-5)>")
         sys.exit(1)

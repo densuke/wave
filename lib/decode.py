@@ -4,16 +4,23 @@ import io
 import numpy as np
 import argparse
 import hashlib
+from typing import Optional
+
 # 設定を読み込む（Windows対応: encoding指定）
-def load_config_toml():
-    with open("config.toml", "r", encoding="utf-8") as f:
+def load_config_toml(config_path: str = "config.toml") -> dict:
+    with open(config_path, "r", encoding="utf-8") as f:
         return toml.load(io.StringIO(f.read()))
 
 config = load_config_toml()
-SAMPLE_RATE = config["SAMPLE_RATE"]
-BITRATE = config["BITRATE"]  # 1秒間に何ビット詰め込むか
+SAMPLE_RATE: int = config["SAMPLE_RATE"]
+BITRATE: int = config["BITRATE"]  # 1秒間に何ビット詰め込むか
 
-def decode_tone(file_path, correct_bit_string=None, duration=None, sample_rate=SAMPLE_RATE):
+def decode_tone(
+    file_path: str,
+    correct_bit_string: Optional[str] = None,
+    duration: Optional[float] = None,
+    sample_rate: int = SAMPLE_RATE
+) -> str:
     """
     WAVファイルを読み取り、0と1の文字列を復元する。
 
@@ -77,7 +84,7 @@ def decode_tone(file_path, correct_bit_string=None, duration=None, sample_rate=S
     return bit_string
 
 
-def bitstring_to_str(bit_string):
+def bitstring_to_str(bit_string: str) -> str:
     # 8ビットごとに区切ってバイト列に変換し、UTF-8デコード
     bytes_list = [bit_string[i:i+8] for i in range(0, len(bit_string), 8)]
     byte_values = [int(b, 2) for b in bytes_list if len(b) == 8]
@@ -86,12 +93,12 @@ def bitstring_to_str(bit_string):
     except Exception as e:
         return f"[デコード失敗: {e}]"
 
-def bitstring_to_bytes(bit_string):
+def bitstring_to_bytes(bit_string: str) -> bytes:
     bytes_list = [bit_string[i:i+8] for i in range(0, len(bit_string), 8)]
     byte_values = [int(b, 2) for b in bytes_list if len(b) == 8]
     return bytes(byte_values)
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="FSK音声からビット列・文字列・ファイルを復元")
     parser.add_argument('input', help='デコードするWAVファイル')
     parser.add_argument('--file', type=str, help='元データファイル（MD5比較用）')
