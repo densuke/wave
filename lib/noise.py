@@ -14,28 +14,25 @@ def add_noise(samples, sample_rate, noise_level):
     if noise_level == 0:
         return samples
 
-    # ホワイトノイズ
-    white_noise = np.random.normal(0, 1000 * noise_level, samples.shape)
+    # ホワイトノイズ（強度を下げる）
+    white_noise = np.random.normal(0, 500 * noise_level, samples.shape)
 
-    # ハムノイズ（50Hz or 60Hz）
+    # ハムノイズ（強度を下げる）
     hum_freq = 50 if random.random() < 0.5 else 60
     t = np.arange(len(samples)) / sample_rate
-    hum_noise = 2000 * noise_level * np.sin(2 * np.pi * hum_freq * t)
+    hum_noise = 1000 * noise_level * np.sin(2 * np.pi * hum_freq * t)
 
-    # パルスノイズ
+    # パルスノイズ（発生数・振幅を抑える）
     pulse_noise = np.zeros_like(samples)
     if noise_level >= 3:
-        num_pulses = int(len(samples) * 0.001 * noise_level)
+        num_pulses = int(len(samples) * 0.0005 * noise_level)  # 発生数半減
         for _ in range(num_pulses):
             idx = random.randint(0, len(samples) - 1)
-            val = random.choice([-1, 1]) * 20000 * noise_level
-            # int16範囲にクリップしてから代入
+            val = random.choice([-1, 1]) * 10000 * noise_level  # 振幅半減
             val = int(np.clip(val, -32768, 32767))
             pulse_noise[idx] = val
 
-    # 合成
     noisy = samples + white_noise + hum_noise + pulse_noise
-    # 16bit整数にクリップ
     noisy = np.clip(noisy, -32768, 32767)
     return noisy.astype(np.int16)
 

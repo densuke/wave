@@ -13,7 +13,7 @@ SAMPLE_RATE = config["SAMPLE_RATE"]
 NOISE_LEVEL = config["NOISE_LEVEL"]
 
 
-def generate_tone(bit_string, duration=None, sample_rate=SAMPLE_RATE, noise_level=NOISE_LEVEL):
+def generate_tone(bit_string, duration=None, sample_rate=SAMPLE_RATE, noise_level=NOISE_LEVEL, output_path="output.wav"):
     if duration is None:
         duration = 1.0 / BITRATE  # 1ビットあたりの秒数
 
@@ -24,42 +24,35 @@ def generate_tone(bit_string, duration=None, sample_rate=SAMPLE_RATE, noise_leve
     :param duration: 各音の長さ（秒）
     :param sample_rate: サンプリングレート
     :param noise_level: ノイズの強さ（0〜5）
+    :param output_path: 出力WAVファイルパス
     """
     # 周波数のマッピング（Bell 202 FSK: 0=1200Hz, 1=2200Hz）
     freq_map = {'0': 1200, '1': 2200}
 
-    # WAVファイルの設定
-    output_file = "output.wav"
     amplitude = 32767  # 最大振幅（16ビットPCM）
-
-    # サンプルデータを格納するリスト
     samples = []
 
     for bit in bit_string:
         if bit not in freq_map:
             print(f"無効な文字: {bit}（スキップします）")
             continue
-
         frequency = freq_map[bit]
         for i in range(int(sample_rate * duration)):
             t = i / sample_rate
             sample = amplitude * math.sin(2 * math.pi * frequency * t)
-            # ノイズを加える（ノイズレベルに応じて周波数の幅を調整）
             max_noise = 100 + (noise_level * 100)  # ノイズ幅を100Hz単位で増加
             noise = random.uniform(-max_noise, max_noise)
             sample_with_noise = sample + noise
-            # 値を16ビット整数の範囲にクリップ
             sample_with_noise = max(-amplitude, min(amplitude, sample_with_noise))
             samples.append(int(sample_with_noise))
 
-    # WAVファイルの書き込み
-    with wave.open(output_file, 'w') as wav_file:
+    with wave.open(output_path, 'w') as wav_file:
         wav_file.setnchannels(1)  # モノラル
         wav_file.setsampwidth(2)  # 16ビット
         wav_file.setframerate(sample_rate)
         wav_file.writeframes(struct.pack('<' + 'h' * len(samples), *samples))
 
-    print(f"WAVファイルを生成しました: {output_file}")
+    print(f"WAVファイルを生成しました: {output_path}")
 
 def str_to_bitstring(s):
     return ''.join(f'{b:08b}' for b in s.encode('utf-8'))
