@@ -84,6 +84,8 @@ def main(page: ft.Page) -> None:
     # 結果表示
     result_text = ft.Text(value="", size=14)
     md5_text = ft.Text(value="", size=14)
+    # スピナー
+    progress_ring = ft.ProgressRing(visible=False)
 
     # 音声再生ボタン
     play_encode_btn = ft.ElevatedButton("エンコードWAV再生", disabled=True)
@@ -101,6 +103,9 @@ def main(page: ft.Page) -> None:
     # Audioコントロール削除（外部アプリ再生に戻す）
 
     def on_run(e: ft.ControlEvent) -> None:
+        # スピナー表示
+        progress_ring.visible = True
+        page.update()
         # ファイル名取得
         nonlocal orig_file_path
         file_path_from_input = file_name_input.value.strip() if file_name_input.value else ""
@@ -168,6 +173,8 @@ def main(page: ft.Page) -> None:
         play_noise_btn.disabled = False
         stop_encode_btn.disabled = False
         stop_noise_btn.disabled = False
+        # スピナー非表示
+        progress_ring.visible = False
         page.update()
 
     run_btn.on_click = on_run
@@ -267,6 +274,7 @@ def main(page: ft.Page) -> None:
                     file_name_label
                 ], alignment=ft.MainAxisAlignment.START),
                 run_btn,
+                progress_ring,
                 result_text,
                 md5_text,
                 play_indicator,
