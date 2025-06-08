@@ -94,15 +94,11 @@ def main(page: ft.Page) -> None:
     noise_wav_md5_text = ft.Text(value="", size=12, color="blue")
 
     # ファイルパス保持
-    encode_wav_path = os.path.join(WORK_DIR, "output_orig.wav")  # エンコードWAVはoutput_orig.wav
-    noise_wav_path = os.path.join(WORK_DIR, "output.wav")        # ノイズ付加WAVはoutput.wav
+    encode_wav_path = os.path.join(WORK_DIR, "static", "output_orig.wav")  # エンコードWAVはstatic/output_orig.wav
+    noise_wav_path = os.path.join(WORK_DIR, "static", "output.wav")        # ノイズ付加WAVはstatic/output.wav
     orig_file_path = ""
 
-    # Audioコントロール（ブラウザ内再生用）
-    audio_encode = ft.Audio(src="/static/output_orig.wav", autoplay=False)
-    audio_noise = ft.Audio(src="/static/output.wav", autoplay=False)
-    page.overlay.append(audio_encode)
-    page.overlay.append(audio_noise)
+    # Audioコントロール削除（外部アプリ再生に戻す）
 
     def on_run(e: ft.ControlEvent) -> None:
         # ファイル名取得
@@ -228,15 +224,12 @@ def main(page: ft.Page) -> None:
         print(f"[再生] {kind}: {path}")
         stop_wav(kind)
         start_play_indicator(path, kind)
-        # Audioコントロールでブラウザ内再生
-        if kind == "encode":
-            audio_encode.src = "/static/output_orig.wav"
-            page.update()
-            audio_encode.play()
-        elif kind == "noise":
-            audio_noise.src = "/static/output.wav"
-            page.update()
-            audio_noise.play()
+        # 外部アプリでwav再生
+        if os.name == "posix":
+            proc = subprocess.Popen(["afplay", path])
+        else:
+            proc = subprocess.Popen(["start", path], shell=True)
+        play_process[kind] = proc
 
     play_encode_btn.on_click = lambda e: play_wav(encode_wav_path, "encode")
     play_noise_btn.on_click = lambda e: play_wav(noise_wav_path, "noise")
@@ -251,6 +244,8 @@ def main(page: ft.Page) -> None:
         stop_noise_btn.disabled = False
 
     # レイアウト
+    # audioタグ埋め込み削除
+
     page.add(
         ft.Row([
             ft.Column([
