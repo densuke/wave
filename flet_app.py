@@ -114,7 +114,7 @@ def main(page: ft.Page) -> None:
         if file_path_from_input:
             orig_file_path = file_path_from_input
         if not orig_file_path:
-            result_text.value = "ファイル名を入力または選択してください"
+            result_text.value = translations[current_lang]["file_required"]
             page.update()
             return
         noise_level = int(noise_slider.value)
@@ -169,7 +169,7 @@ def main(page: ft.Page) -> None:
         else:
             compare_result += "\n[NG] MD5不一致: データ化けあり"
         md5_text.value = compare_result
-        result_text.value = "デコード結果を表示しました（内容は非表示）"
+        result_text.value = translations[current_lang]["decode_result"]
         # ボタン有効化
         play_encode_btn.disabled = False
         play_noise_btn.disabled = False
@@ -270,21 +270,135 @@ def main(page: ft.Page) -> None:
         stop_encode_btn.disabled = False
         stop_noise_btn.disabled = False
 
-    # レイアウト
-    # audioタグ埋め込み削除
-
-    # WindowsではNoneを除外したリストを構築
+    # Noneを除外するユーティリティ（Windows用レイアウトで使用）
     def filter_none(lst):
         return [x for x in lst if x is not None]
 
+    # 言語リストと翻訳辞書
+    LANGS = {"ja": "日本語", "zh": "中文", "my": "မြန်မာ", "bn": "বাংলা"}
+    translations = {
+        "ja": {
+            "title": "FSKエンコード/デコードUI",
+            "run": "変換開始",
+            "file_label": "変換元ファイル名（パス）",
+            "noise_level": "ノイズレベル",
+            "sample_rate": "サンプリングレート",
+            "bitrate": "ビットレート",
+            "encode_wav": "エンコードWAV",
+            "noise_wav": "ノイズ付加WAV",
+            "decode_result": "デコード結果を表示しました（内容は非表示）",
+            "file_required": "ファイル名を入力または選択してください",
+            "play_encode": "エンコードWAV再生",
+            "stop_encode": "エンコード再生停止",
+            "play_noise": "ノイズ付加WAV再生",
+            "stop_noise": "ノイズ再生停止",
+        },
+        "zh": {
+            "title": "FSK编码/解码UI",
+            "run": "开始转换",
+            "file_label": "源文件名（路径）",
+            "noise_level": "噪声等级",
+            "sample_rate": "采样率",
+            "bitrate": "比特率",
+            "encode_wav": "编码WAV",
+            "noise_wav": "加噪WAV",
+            "decode_result": "解码结果已显示（内容隐藏）",
+            "file_required": "请输入或选择文件名",
+            "play_encode": "编码WAV播放",
+            "stop_encode": "编码停止",
+            "play_noise": "加噪WAV播放",
+            "stop_noise": "加噪停止",
+        },
+        "my": {
+            "title": "FSK Encode/Decode UI (မြန်မာ)",
+            "run": "ပြောင်းလဲမှုစတင်ပါ",
+            "file_label": "မူရင်းဖိုင်နာမည် (လမ်းကြောင်း)",
+            "noise_level": "ဆူညံသံအဆင့်",
+            "sample_rate": "နမူနာနှုန်း",
+            "bitrate": "ဘစ်နှုန်း",
+            "encode_wav": "Encode WAV",
+            "noise_wav": "Noise WAV",
+            "decode_result": "ပြန်ဖတ်ရလဒ် ပြသပြီး (အကြောင်းအရာ မပြသပါ)",
+            "file_required": "ဖိုင်နာမည် ထည့်သွင်းပါ သို့မဟုတ် ရွေးချယ်ပါ",
+            "play_encode": "Encode WAV ဖျော်ဖြေရန်",
+            "stop_encode": "Encode ရပ်ရန်",
+            "play_noise": "Noise WAV ဖျော်ဖြေရန်",
+            "stop_noise": "Noise ရပ်ရန်",
+        },
+        "bn": {
+            "title": "FSK এনকোড/ডিকোড UI",
+            "run": "রূপান্তর শুরু করুন",
+            "file_label": "ফাইলের নাম (পথ)",
+            "noise_level": "নয়েজ স্তর",
+            "sample_rate": "স্যাম্পল রেট",
+            "bitrate": "বিটরেট",
+            "encode_wav": "এনকোড WAV",
+            "noise_wav": "নয়েজ WAV",
+            "decode_result": "ডিকোড ফলাফল দেখানো হয়েছে (বিষয়বস্তু লুকানো)",
+            "file_required": "ফাইলের নাম লিখুন বা নির্বাচন করুন",
+            "play_encode": "এনকোড WAV বাজান",
+            "stop_encode": "এনকোড থামান",
+            "play_noise": "নয়েজ WAV বাজান",
+            "stop_noise": "নয়েজ থামান",
+        },
+    }
+    current_lang = "ja"
+
+    def set_lang(lang_code: str):
+        nonlocal current_lang
+        current_lang = lang_code
+        update_ui_texts()
+
+    def update_ui_texts():
+        t = translations[current_lang]
+        page.title = t["title"]
+        file_name_input.label = t["file_label"]
+        noise_slider.label = t["noise_level"] + ": {value}"
+        sample_rate_dropdown.label = t["sample_rate"]
+        bitrate_dropdown.label = t["bitrate"]
+        run_btn.text = t["run"]
+        # サイドラベルも更新
+        noise_label.value = t["noise_level"]
+        sample_rate_label.value = t["sample_rate"]
+        bitrate_label.value = t["bitrate"]
+        encode_wav_label.value = t["encode_wav"]
+        noise_wav_label.value = t["noise_wav"]
+        play_encode_btn.text = t["play_encode"]
+        stop_encode_btn.text = t["stop_encode"]
+        play_noise_btn.text = t["play_noise"]
+        stop_noise_btn.text = t["stop_noise"]
+        encode_wav_md5_text.value = ""
+        noise_wav_md5_text.value = ""
+        result_text.value = ""
+        md5_text.value = ""
+        page.update()
+
+    # サイドラベル用Text
+    noise_label = ft.Text(translations[current_lang]["noise_level"], size=14, weight=ft.FontWeight.BOLD)
+    sample_rate_label = ft.Text(translations[current_lang]["sample_rate"], size=14, weight=ft.FontWeight.BOLD)
+    bitrate_label = ft.Text(translations[current_lang]["bitrate"], size=14, weight=ft.FontWeight.BOLD)
+    encode_wav_label = ft.Text(translations[current_lang]["encode_wav"], size=12, weight=ft.FontWeight.BOLD)
+    noise_wav_label = ft.Text(translations[current_lang]["noise_wav"], size=12, weight=ft.FontWeight.BOLD)
+
+    # 言語選択ドロップダウン
+    lang_dropdown = ft.Dropdown(
+        label="Language",
+        options=[ft.dropdown.Option(k, v) for k, v in LANGS.items()],
+        value=current_lang,
+        width=180,
+        on_change=lambda e: set_lang(e.control.value)
+    )
+
+    # レイアウト
     page.add(
         ft.Row([
             ft.Column([
-                ft.Text("ノイズレベル", size=14, weight=ft.FontWeight.BOLD),
+                lang_dropdown,
+                noise_label,
                 noise_slider,
-                ft.Text("サンプリングレート", size=14, weight=ft.FontWeight.BOLD),
+                sample_rate_label,
                 sample_rate_dropdown,
-                ft.Text("ビットレート", size=14, weight=ft.FontWeight.BOLD),
+                bitrate_label,
                 bitrate_dropdown,
             ], alignment=ft.MainAxisAlignment.START, width=220),
             ft.VerticalDivider(width=1),
@@ -300,7 +414,7 @@ def main(page: ft.Page) -> None:
                 play_indicator if os.name != "nt" else None,
                 ft.Row([
                     ft.Column([
-                        ft.Text("エンコードWAV", size=12, weight=ft.FontWeight.BOLD),
+                        encode_wav_label,
                         encode_wav_md5_text,
                         ft.Row(filter_none([
                             play_encode_btn,
@@ -308,7 +422,7 @@ def main(page: ft.Page) -> None:
                         ]), tight=True)
                     ], spacing=4),
                     ft.Column([
-                        ft.Text("ノイズ付加WAV", size=12, weight=ft.FontWeight.BOLD),
+                        noise_wav_label,
                         noise_wav_md5_text,
                         ft.Row(filter_none([
                             play_noise_btn,
@@ -319,6 +433,7 @@ def main(page: ft.Page) -> None:
             ]), alignment=ft.MainAxisAlignment.START, expand=True)
         ], expand=True),
     )
+    update_ui_texts()
 
 if __name__ == "__main__":
     # Flet UIをブラウザで開く
