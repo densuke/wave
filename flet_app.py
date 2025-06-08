@@ -4,13 +4,24 @@ import importlib
 import flet as ft
 import subprocess
 import typing
+import shutil
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+WORK_DIR = os.path.dirname(os.path.abspath(__file__))
+config_template_path = os.path.join(WORK_DIR, "config.toml.in")
+config_path = os.path.join(WORK_DIR, "config.toml")
+if not os.path.exists(config_path):
+    shutil.copy2(config_template_path, config_path)
+
+sys.path.insert(0, os.path.join(WORK_DIR, "lib"))
 encode = importlib.import_module("encode")
 decode = importlib.import_module("decode")
 noise = importlib.import_module("noise")
 
-WORK_DIR = os.path.dirname(os.path.abspath(__file__))
+# config.toml自動生成
+config_template_path = os.path.join(WORK_DIR, "config.toml.in")
+config_path = os.path.join(WORK_DIR, "config.toml")
+if not os.path.exists(config_path):
+    shutil.copy2(config_template_path, config_path)
 
 # UIコールバック
 
@@ -26,7 +37,6 @@ def main(page: ft.Page):
 
     # config.tomlから初期値取得
     import re
-    config_path = os.path.join(WORK_DIR, "config.toml")
     with open(config_path, "r") as f:
         config_text = f.read()
     bitrate_match = re.search(r"BITRATE\s*=\s*(\d+)", config_text)
