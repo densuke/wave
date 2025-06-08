@@ -293,14 +293,15 @@ def main(page: ft.Page) -> None:
                 progress_ring,
                 result_text,
                 md5_text,
-                play_indicator,
+                # Windowsでは再生インジケーター・停止ボタン非表示
+                play_indicator if os.name != "nt" else None,
                 ft.Row([
                     ft.Column([
                         ft.Text("エンコードWAV", size=12, weight=ft.FontWeight.BOLD),
                         encode_wav_md5_text,
                         ft.Row([
                             play_encode_btn,
-                            stop_encode_btn
+                            stop_encode_btn if os.name != "nt" else None
                         ], tight=True)
                     ], spacing=4),
                     ft.Column([
@@ -308,7 +309,7 @@ def main(page: ft.Page) -> None:
                         noise_wav_md5_text,
                         ft.Row([
                             play_noise_btn,
-                            stop_noise_btn
+                            stop_noise_btn if os.name != "nt" else None
                         ], tight=True)
                     ], spacing=4)
                 ], wrap=True, alignment=ft.MainAxisAlignment.START, spacing=24)
